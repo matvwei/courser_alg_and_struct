@@ -129,9 +129,9 @@ int main()
 		addPetTemp(i, "test_" + to_string(i), headPetTemp);
 	}
 
-	//cout << endl << "Start array:" << endl;
-	//coutPetTemp(headPetTemp);
-	//cout << endl << "algorithm:" << endl << "=========================" << endl<<endl;
+	cout << endl << "Start array:" << endl;
+	coutPetTemp(headPetTemp);
+	cout << endl << "algorithm:" << endl << "=========================" << endl<<endl;
 
 	int last_delete = 0;
 
@@ -157,8 +157,8 @@ int main()
 
 		
 		temp_size--;
-		//cout << "random = " << randint <<" last_delete = "<< last_delete << endl;
-		//coutPetTemp(headPetTemp);
+		cout << "random = " << randint <<" last_delete = "<< last_delete << endl;
+		coutPetTemp(headPetTemp);
 	}
 	cout <<  endl << "=========================" << endl;
 
