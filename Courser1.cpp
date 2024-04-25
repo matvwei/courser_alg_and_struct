@@ -8,6 +8,7 @@
 using namespace std;
 
 
+
 //курсовая работа
 struct PetTemp
 {
@@ -16,6 +17,13 @@ struct PetTemp
 	PetTemp* next;
 };
 
+
+//Структура с чанками для оптимизации
+struct ChunksPets {
+	int id;
+	ChunksPets* nextPetChunk;
+	PetTemp* petInHead;
+};
 //Самый первый элемент
 PetTemp* headPetTemp;
 
@@ -31,7 +39,7 @@ PetTemp* createPetTemp(int id, string name)
 }
 
 //Добавление предмета в массив
-void addPetTemp(int id, string name, PetTemp* h) {
+PetTemp* addPetTemp(int id, string name, PetTemp* h) {
 	PetTemp* newPet = createPetTemp(id, name);
 
 	if (h != NULL) {
@@ -45,7 +53,7 @@ void addPetTemp(int id, string name, PetTemp* h) {
 	else {
 		headPetTemp = newPet;
 	}
-	//return = newPet;
+	return newPet;
 }
 
 //Добавление элемента в начало
@@ -117,21 +125,87 @@ bool deletePetTempForNumber(int number, PetTemp* h) {
 	return false;
 }
 
+
+ChunksPets* headChunk;
+
+//Создание чанка
+ChunksPets* createChunk(int id, PetTemp* pet)
+{
+	struct ChunksPets* chunk = new ChunksPets;
+
+	chunk->id = id;
+	chunk->petInHead = pet;
+	chunk->nextPetChunk = NULL;
+	return chunk;
+}
+
+
+//Добавление чанка в стек
+ChunksPets* addChunk(int id, PetTemp* pet, ChunksPets* hChunk) {
+	ChunksPets* newChunk = createChunk(id, pet);
+
+	if (hChunk != NULL) {
+		while (hChunk->nextPetChunk)
+		{
+			hChunk = hChunk->nextPetChunk;
+		}
+		hChunk->nextPetChunk = newChunk;
+
+	}
+	else {
+		headChunk = newChunk;
+	}
+	return newChunk;
+}
+
+
+
+
+static int round_up(double value) {
+	return (int)ceil(value);
+}
+
 int main()
 {
 	srand(time(0));
 
-	int size_arr = 20;
+	int size_arr = 21;
 	int temp_size = size_arr;
+		
+	int chunk_size = 5;
+	int size_arr_chunks = round_up((double)size_arr/ (double)chunk_size);
 
-	for (int i = 1; i <= size_arr; i++)
+	PetTemp* chunks_petTemp = new PetTemp[size_arr_chunks];
+
+	//for (int i = 0; i < size_arr_chunks; i++)
+	//{
+	//	for (int j = 1; j <= chunk_size; j++)
+	//	{
+	//		cout << (i * chunk_size) + j << endl;
+	//	}
+	//}
+	int temp_chunk_size = 1;
+	for (int i = 0; i < size_arr; i++)
 	{
-		addPetTemp(i, "test_" + to_string(i), headPetTemp);
+		PetTemp* tempPet = addPetTemp(i+1, "test_" + to_string(i+1), headPetTemp);
+		if (i == chunk_size*temp_chunk_size) {
+			addChunk(temp_chunk_size, tempPet, headChunk);
+			//chunks_petTemp[temp_chunk_size ] = tempPet;
+			temp_chunk_size++;
+
+		}
 	}
+
+	for (int i = 0; i < size_arr_chunks; i++)
+	{
+		cout << chunks_petTemp[i].id << endl;
+	}
+	
 
 	cout << endl << "Start array:" << endl;
 	coutPetTemp(headPetTemp);
 	cout << endl << "algorithm:" << endl << "=========================" << endl<<endl;
+
 
 	int last_delete = 0;
 
