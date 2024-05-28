@@ -1,11 +1,16 @@
 ﻿
 
 #include <iostream>
-#include <string> 
 #include <iterator>
 #include <ctime>
 #include <stdio.h> 
 #include <time.h> 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <locale>
+#include <cstring>
 
 using namespace std;
 
@@ -297,40 +302,123 @@ static int div_ceil(double divined, double divider) {
 	return (int)ceil(divined / divider);
 }
 
-bool dzozefusWithChunk() {
+int read_file(string filename = "clients.txt", int chunk_size = 5000) {
 	
+	ifstream file("clients.txt");
+
+	// Проверяем, успешно ли открылся файл
+	if (!file.is_open()) {
+		cerr << "Не удалось открыть файл." << endl;
+		return 0;
+	}
+
+	string line;
+
+	int size_arr = 0;
+	while (getline(file, line)) {
+		// Используем stringstream для разбивки строки на номер и имя клиента
+
+		stringstream ss(line);
+		string client_number, client_name;
+
+		// Извлекаем номер и имя клиента
+		getline(ss, client_number, ':');
+		getline(ss, client_name);
+
+		PetTemp* tempPet = addPetTemp(size_arr + 1, client_name, headPetTemp);
+
+		size_arr++;
+	}
+
+	file.close();
+
+	return size_arr;
+}
 
 
-	int size_arr = 10000;
+int read_file_chunks(string filename = "clients.txt", int chunk_size = 5000) {
+	ifstream file(filename);
 
-	//Размер массива в основными элементами
-	int temp_size = size_arr;
+	// Проверяем, успешно ли открылся файл
+	if (!file.is_open()) {
+		cerr << "Не удалось открыть файл." << endl;
+		return 0;
+	}
+	string line;
 
-	//Размер чанка
-	int chunk_size = 500;
-
-	PetTemp* tempPetT = NULL;
-
-	//Количество чанков динаминчное
+	int size_arr = 0;
 	int temp_chunk_size = 0;
 
+	// Читаем строки из файла
+	while (getline(file, line)) {
+		// Используем stringstream для разбивки строки на номер и имя клиента
 
-	//Цикл по заполнение массива с основными элементами и заполнению чанков
-	for (int i = 0; i < size_arr; i++)
-	{
-		PetTemp* tempPet = addPetTemp(i + 1, "test_" + to_string(i + 1), headPetTemp);
-		if (i == chunk_size * temp_chunk_size) {
+		stringstream ss(line);
+		string client_number, client_name;
+
+		// Извлекаем номер и имя клиента
+		getline(ss, client_number, ':');
+		getline(ss, client_name);
+
+		PetTemp* tempPet = addPetTemp(size_arr + 1, client_name, headPetTemp);
+		if (size_arr == chunk_size * temp_chunk_size) {
 			addChunk(temp_chunk_size + 1, tempPet, headChunk);
 			//chunks_petTemp[temp_chunk_size ] = tempPet;
 			temp_chunk_size++;
 		}
-
+		size_arr++;
 	}
+
+	file.close();
+
+
+	return size_arr;
+}
+
+int inside_calc_delete(int chunk_size, int num_chunk, int temp_size, int last_delete) {
+	ChunksPets* tempChunk = NULL;
+	if (temp_size > chunk_size)
+	{
+		num_chunk = div_ceil((double)(temp_size), (double)chunk_size);
+	}
+
+	tempChunk = searchChunk(num_chunk, headChunk);
+
+	int tempDiv = temp_size % chunk_size;
+	//Проверка на то, что это последний элемент в чанке
+	if (tempDiv == 0) tempDiv = chunk_size;
+
+	deletePetWithChunks(tempDiv, tempChunk->petInHead, tempChunk);
+	return temp_size;
+}
+
+bool dzozefusWithChunk() {
+	
+	cout << "Программа по реализоации алгоритма Джозефуса"<<endl;
+	cout << "Введите название файла или оставьте пустым для открытия стандартного файла" << endl;
+	char input[100];
+	std::cin.getline(input, 100);
+	string file_name = input;
+	if (strlen(input) < 1) file_name = "clients.txt";
+	//Размер чанка
+	int chunk_size = 500;
+
+	//Размер массива с записями
+	int size_arr = read_file_chunks(file_name, chunk_size);
+	if (size_arr < 1) {
+		cout << "Файл не содержит записи";
+		return false;
+	}
+	//Количество чанков динаминчное
+	int temp_chunk_size = div_ceil(size_arr, chunk_size);
 
 	//coutChunks(headChunk);
 
-	//cout << endl << "Start array:" << endl;
+	cout << endl << "Начала алгоритма:" << endl;
+	clock_t start = clock();
 	//coutPetTemp(headPetTemp);
+	//Размер массива в основными элементами
+	int temp_size = size_arr;
 
 	int last_delete = 0;
 
@@ -339,58 +427,23 @@ bool dzozefusWithChunk() {
 		int randint = rand() % size_arr + 1;
 		//cout << "random = " << randint;
 		int num_chunk = 1;
-		ChunksPets* tempChunk = NULL;
+		
 
 
 		//Остаток от размера массива
 		int dif = (last_delete + randint) % temp_size;
+		//Тот случай когда остатка нет это 9/9 или 18/9
 		if (dif == 0) {
+			//Если рандомное число + последний удалившийся номер больше и остаток = 0, чем размер массива данных, нужный номер это размер массива
 			if (randint + last_delete >= temp_size) {
-
-				if (temp_size > chunk_size)
-				{
-					num_chunk = div_ceil((double)(temp_size), (double)chunk_size);
-				}
-
-				tempChunk = searchChunk(num_chunk, headChunk);
-
-				int tempDiv = temp_size % chunk_size;
-				if (tempDiv == 0) tempDiv = chunk_size;
-
-				deletePetWithChunks(tempDiv, tempChunk->petInHead, tempChunk);
-				last_delete = temp_size;
+				last_delete = inside_calc_delete (chunk_size,num_chunk, temp_size, last_delete);
 			}
 			else {
-				if (randint + last_delete > chunk_size)
-				{
-					num_chunk = div_ceil((double)(randint + last_delete), (double)chunk_size);
-				}
-
-				tempChunk = searchChunk(num_chunk, headChunk);
-
-				int tempDiv = temp_size % chunk_size;
-				if (tempDiv == 0) tempDiv = chunk_size;
-
-				deletePetWithChunks(randint + last_delete, tempChunk->petInHead, tempChunk);
-				last_delete = randint + last_delete;
+				last_delete = inside_calc_delete(chunk_size, num_chunk, randint + last_delete, last_delete);
 			}
 		}
 		else {
-			if (dif > chunk_size)
-			{
-
-				num_chunk = div_ceil((double)(dif), (double)chunk_size);
-			}
-
-			tempChunk = searchChunk(num_chunk, headChunk);
-
-
-			int tempDiv = dif % chunk_size;
-			if (tempDiv == 0) tempDiv = chunk_size;
-
-			deletePetWithChunks(tempDiv, tempChunk->petInHead, tempChunk);
-
-			last_delete = dif;
+			last_delete = inside_calc_delete( chunk_size, num_chunk, dif, last_delete);
 		}
 		temp_size--;
 		//cout << " last_delete = " << last_delete << endl;
@@ -400,8 +453,13 @@ bool dzozefusWithChunk() {
 
 	}
 
+	cout << endl << "Результат алгоритма Джозефуса"<<endl<<endl;
 	coutPetTemp(headPetTemp);
+	cout << endl;
 
+	clock_t end = clock();
+	double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+	printf("The time: %f seconds\n", seconds);
 
 	return true;
 
@@ -409,17 +467,22 @@ bool dzozefusWithChunk() {
 
 bool dzozefus() {
 	//Алгоритм без чанков
-
-	int size_arr = 10000;
-	int temp_size = size_arr;
 	headPetTemp = NULL;
 
-	for (int i = 0; i < size_arr; i++)
-	{
-		PetTemp* tempPet = addPetTemp(i + 1, "test_" + to_string(i + 1), headPetTemp);
-	}
+	int size_arr =read_file("clients.txt");
+	int temp_size = size_arr;
+
+	temp_size = size_arr;
+
+
+	//for (int i = 0; i < size_arr; i++)
+	//{
+	//	PetTemp* tempPet = addPetTemp(i + 1, "test_" + to_string(i + 1), headPetTemp);
+	//}
 
 	cout << endl << "Start array:" << endl;
+	clock_t start = clock();
+
 	//coutPetTemp(headPetTemp);
 	//cout << endl << "algorithm:" << endl << "=========================" << endl << endl;
 
@@ -457,29 +520,35 @@ bool dzozefus() {
 	coutPetTemp(headPetTemp);
 
 
+	clock_t end = clock();
+	double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+	printf("The time: %f seconds\n", seconds);
+
 	return true;
 }
 
 int main()
 {
+	setlocale(LC_ALL, "Russian");
+
 	srand(time(0));
 
-	clock_t start = clock();
+	//clock_t start = clock();
 
 	dzozefusWithChunk();
 
-	clock_t end = clock();
-	double seconds = (double)(end - start) / CLOCKS_PER_SEC;
-	printf("The time: %f seconds\n", seconds);
+	//clock_t end = clock();
+	//double seconds = (double)(end - start) / CLOCKS_PER_SEC;
+	//printf("The time: %f seconds\n", seconds);
 
 
-	clock_t start2 = clock();
+	//clock_t start2 = clock();
 
-	dzozefus();
-	
-	clock_t end2 = clock();
-	double seconds2 = (double)(end2 - start2) / CLOCKS_PER_SEC;
-	printf("The time: %f seconds\n", seconds2);
+	//dzozefus();
+	//
+	//clock_t end2 = clock();
+	//double seconds2 = (double)(end2 - start2) / CLOCKS_PER_SEC;
+	//printf("The time: %f seconds\n", seconds2);
 
 	exit(0);
 }
